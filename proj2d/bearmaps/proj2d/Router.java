@@ -1,5 +1,10 @@
 package bearmaps.proj2d;
 
+import bearmaps.proj2c.AStarSolver;
+import bearmaps.proj2c.WeirdSolver;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -7,7 +12,7 @@ import java.util.regex.Pattern;
 
 /**
  * This class acts as a helper for the RoutingAPIHandler.
- * @author Josh Hug, ______
+ * @author Josh Hug, Hui Wang
  */
 public class Router {
 
@@ -24,10 +29,11 @@ public class Router {
      */
     public static List<Long> shortestPath(AugmentedStreetMapGraph g, double stlon, double stlat,
                                           double destlon, double destlat) {
-        //long src = g.closest(stlon, stlat);
-        //long dest = g.closest(destlon, destlat);
+        long src = g.closest(stlon, stlat);
+        long dest = g.closest(destlon, destlat);
         //return new WeirdSolver<>(g, src, dest, 20).solution();
-        return null;
+        return new AStarSolver<>(g, src, dest, 20).solution();
+        //return null;
     }
 
     /**
@@ -41,6 +47,46 @@ public class Router {
     public static List<NavigationDirection> routeDirections(AugmentedStreetMapGraph g,
                                                             List<Long> route) {
         /* fill in for part IV */
+        /*
+        List<NavigationDirection> nd_list = new LinkedList<>();
+        ArrayList<Double> route_lon = new ArrayList<>();
+        ArrayList<Double> route_lat = new ArrayList<>();
+        ArrayList<Integer> route_direction = new ArrayList<>();  // only need to record the left(previous) node
+        ArrayList<String> route_name = new ArrayList<>();
+        for(long ID : route) {
+            route_lon.add(g.lon(ID));
+            route_lat.add(g.lat(ID));
+            route_name.add(g.name(ID));
+        }
+        route_direction.add(0);   //the first node is start
+        for(int i = 1; i < route.size() - 1; i++) {
+            double prevBearing = NavigationDirection.bearing(route_lon.get(i - 1), route_lon.get(i),
+                    route_lat.get(i - 1), route_lat.get(i));
+            double currBearing = NavigationDirection.bearing(route_lon.get(i), route_lon.get(i + 1),
+                    route_lat.get(i), route_lat.get(i + 1));
+            route_direction.add(NavigationDirection.getDirection(prevBearing, currBearing));
+        }
+        NavigationDirection temp = new NavigationDirection();
+        temp.direction = 0;
+        temp.way = route_name.get(0);
+        for(int i = 0; i < route.size() - 1; i++) {
+            String prevName = route_name.get(i);
+            String currName = route_name.get(i + 1);
+            int direction = route_direction.get(i);
+            if(prevName != currName || direction != 1) {
+                nd_list.add(NavigationDirection.fromString(temp.toString()));
+                temp.way = currName;
+                temp.direction = direction;
+                temp.distance = 0.0;
+            }
+            else {
+                temp.distance += g.estimatedDistanceToGoal(route.get(i), route.get(i + 1));
+            }
+        }
+        nd_list.add(NavigationDirection.fromString(temp.toString()));
+        return nd_list;
+
+         */
         return null;
     }
 

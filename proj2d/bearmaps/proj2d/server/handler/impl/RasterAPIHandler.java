@@ -12,10 +12,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Base64;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static bearmaps.proj2d.utils.Constants.SEMANTIC_STREET_GRAPH;
 import static bearmaps.proj2d.utils.Constants.ROUTE_LIST;
@@ -87,8 +85,35 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         //System.out.println("yo, wanna know the parameters given by the web browser? They are:");
         //System.out.println(requestParams);
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
-                + "your browser.");
+        //System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
+        //        + "your browser.");
+        double[] perPixel = perPixelToD(8, Constants.ROOT_ULLON, Constants.ROOT_LRLON);
+        double goal = Math.abs(requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[1]) -
+                requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[3])) / requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[4]);
+        int depth = findBestD(perPixel, goal);
+        ArrayList<Integer> X_range = findResultingImage_X(depth, Constants.ROOT_ULLON, Constants.ROOT_LRLON,
+                requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[1]), requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[3]));
+        ArrayList<Integer> Y_range = findResultingImage_Y(depth, Constants.ROOT_ULLAT, Constants.ROOT_LRLAT,
+                requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[0]), requestParams.get(REQUIRED_RASTER_REQUEST_PARAMS[2]));
+
+        String[][] render_grid = new String[Y_range.size()][X_range.size()];
+        for(int i = 0; i < Y_range.size(); i++) {
+            for(int j = 0; j < X_range.size(); j++) {
+                render_grid[i][j] = "d" + depth + "_x" + X_range.get(j) + "_y" + Y_range.get(i) + ".png";
+            }
+        }
+        double raster_ul_lon = Constants.ROOT_ULLON + X_range.get(0) * Math.abs(Constants.ROOT_ULLON - Constants.ROOT_LRLON) / Math.pow(2, depth);
+        double raster_lr_lon = Constants.ROOT_ULLON + (X_range.get(X_range.size() - 1) + 1) * Math.abs(Constants.ROOT_ULLON - Constants.ROOT_LRLON) / Math.pow(2, depth);
+        double raster_ul_lat = Constants.ROOT_ULLAT - Y_range.get(0) * Math.abs(Constants.ROOT_LRLAT - Constants.ROOT_ULLAT) / Math.pow(2, depth);
+        double raster_lr_lat = Constants.ROOT_ULLAT - (Y_range.get(Y_range.size() - 1) + 1) * Math.abs(Constants.ROOT_LRLAT - Constants.ROOT_ULLAT) / Math.pow(2, depth);
+        boolean query_success = true;
+        results.put("render_grid", render_grid);
+        results.put("raster_ul_lon", raster_ul_lon);
+        results.put("raster_ul_lat", raster_ul_lat);
+        results.put("raster_lr_lon", raster_lr_lon);
+        results.put("raster_lr_lat", raster_lr_lat);
+        results.put("depth", depth);
+        results.put("query_success", query_success);
         return results;
     }
 
@@ -212,5 +237,62 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
             }
         }
         return tileImg;
+    }
+
+    // calculate the length of longitude per pixel unit when range from l_lon to r_lon and divided to depth D
+    private double[] perPixelToD(int D, double l_lon, double r_lon) {
+        double[] ans = new double[D];
+        double dist_lon = Math.abs(l_lon - r_lon);
+        for (int i = 0; i < D; i++) {
+            ans[i] = dist_lon / (Constants.TILE_SIZE * Math.pow(2, i));
+        }
+        return ans;
+    }
+
+    // find the greatest available depth D; if the smallest depth is unavailable, choose the smallest depth as depth
+    private int findBestD(double[] perPixelToD, double goal) {
+        int D = perPixelToD.length;
+        for(int i = 0; i < D; i++) {
+            if(perPixelToD[i] <= goal) {
+                return i;
+            }
+        }
+        return D - 1;
+    }
+
+    // In X axis, find all necessary image for (goalFrom, goalTo) from (rangeFrom, rangeTo)
+    // pre requirement: goalFrom < goalTo, rangeFrom < rangeTo
+    private ArrayList<Integer> findResultingImage_X(int D, double rangeFrom, double rangeTo, double goalFrom, double goalTo) {
+        ArrayList<Integer> ans = new ArrayList<>();
+        double unit = Math.abs(rangeFrom - rangeTo) / Math.pow(2, D);
+
+        for(int i = 0; i < Math.pow(2, D); i++) {
+            if(rangeFrom + i * unit < goalFrom && rangeFrom + (i + 1) * unit <= goalFrom) {
+                continue;
+            }
+            if(rangeFrom + i * unit >= goalTo && rangeFrom + (i + 1) * unit > goalTo) {
+                continue;
+            }
+            ans.add(i);
+        }
+        return ans;
+    }
+
+    // In Y axis, find all necessary image for (goalFrom, goalTo) from (rangeFrom, rangeTo)
+    // pre requirement: goalFrom > goalTo, rangeFrom > rangeTo
+    private ArrayList<Integer> findResultingImage_Y(int D, double rangeFrom, double rangeTo, double goalFrom, double goalTo) {
+        ArrayList<Integer> ans = new ArrayList<>();
+        double unit = Math.abs(rangeFrom - rangeTo) / Math.pow(2, D);
+
+        for(int i = 0; i < Math.pow(2, D); i++) {
+            if(rangeFrom - i * unit < goalTo && rangeFrom - (i + 1) * unit <= goalTo) {
+                continue;
+            }
+            if(rangeFrom - i * unit >= goalFrom && rangeFrom - (i + 1) * unit > goalFrom) {
+                continue;
+            }
+            ans.add(i);
+        }
+        return ans;
     }
 }
