@@ -29,6 +29,9 @@ public class TestRasterAPIHandler {
     private static final int NUM_TESTS = 8;
     private static RasterAPIHandler rasterer;
 
+    //{lrlon=-122.20908713544797, ullon=-122.3027284165759, w=305.0, h=300.0, ullat=37.88708748276975, lrlat=37.848731523430196}
+    //{lrlon=-122.2104604264636, ullon=-122.30410170759153, w=1085.0, h=566.0, ullat=37.870213571328854, lrlat=37.8318576119893}
+
 
     @Before
     public void setUp() throws Exception {
