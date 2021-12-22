@@ -10,7 +10,7 @@ for a small piece of the real world map.
 ##AI features:
 Routing (finding the shortest route between two points):
 
-<img src="/Users/huiwang/Documents/cs61b/cs61b/proj2d/pictures/find_shortest_route.png" width="400"/>
+<img src="//pictures/find_shortest_route.png" width="400"/>
 
 Autocomplete:
 
